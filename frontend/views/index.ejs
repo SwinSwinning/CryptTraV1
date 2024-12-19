@@ -1,0 +1,165 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/styles/style.css">
+  <title>Swin Crypto Tracker</title>
+</head>
+<body>
+  <header>
+    <div class="container">
+    <h1>Crypto Data Manager</h1>
+    <button onclick="fetchDataAndSave()">Fetch and Save Data</button>
+    <button onclick="clearDatabase()">Clear DB</button>
+    <button onclick="dropTable()">Delete DB</button>
+    <div class="dropdown">
+      <button class="dropbtn">Select Coin</button>
+      <div class="dropdown-content" id="ucidDropdown">
+        <!-- Dropdown items will be inserted here dynamically -->
+      </div>
+    </div>
+    </div>
+  </header>
+  <div class=container>
+  <h1>Cryptocurrency Prices</h1>
+  
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Status Timestamp</th>
+        <th>UCID</th>
+        <th>Name</th>
+        <th>Price (USD)</th>
+        <th>15 min Change (%)</th>
+        <th>30 min Change (%)</th>
+        <th>1 Hour Change (%)</th>
+        <th>24 Hour Change (%)</th>
+      </tr>
+    </thead>
+    <tbody id="recordsTableBody">
+      
+    </tbody>
+  </table>
+</div>
+  <script>
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('/get-ucids')
+      .then(response => response.json())
+      .then(data => {
+        const dropdown = document.getElementById('ucidDropdown');
+        
+        // Populate the dropdown with options
+        data.forEach(row => {
+          const option = document.createElement('a');
+          option.href = '#';
+          option.textContent = row.name; // Adjust key based on your data
+          option.onclick = () => handleAction(row.UCID);
+          dropdown.appendChild(option);
+        });
+      })
+      .catch(error => console.error('Error fetching UCIDs:', error));
+
+      getAndUpdate();
+    });
+    
+    function handleAction(ucid) {
+  console.log('UCID selected:', ucid);
+
+  // Make a GET request to the server with the selected UCID as a query parameter
+  fetch(`/?ucid=${ucid}`)
+    .then(response => response.json()) // Assuming the server responds with JSON data
+    .then(data => {
+      console.log(data);
+      updateTable(data);
+    })
+  }
+    async function fetchDataAndSave() {
+      try {
+        const response = await fetch('/fetchDataAndSave', { method: 'POST' });
+        if (response.ok) {
+          getAndUpdate();   
+        } else {
+          alert('Failed to fetch and save data.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error fetching and saving data.');
+      }
+    }
+
+    // Function to call the clearDatabase route
+    async function clearDatabase() {
+      try {
+        const response = await fetch('/clearDatabase', { method: 'POST' });
+        if (response.ok) {
+          alert('Database cleared successfully!');
+          
+          getAndUpdate()
+
+        } else {
+          alert('Failed to clear database.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error clearing database.');
+      }
+    }
+
+    async function dropTable() {
+      try {        
+        const response = await fetch('/dropTable', { method: 'POST' });
+        if (response.ok) {
+          alert('Database dropped successfully!');
+          
+          location.reload();
+        } else {
+          alert('Failed to drop database.');
+        }
+      } catch (error) { 
+        console.error('Error:', error);
+        alert('Error dropping database.');
+      }
+    }
+
+    async function getAndUpdate(ucid = null) {
+      try {
+        
+        const response = await fetch(`/get-data${ucid ? `?ucid=${ucid}` : ''}`);
+        if (!response.ok) throw new Error('Error fetching data');
+        
+        const data = await response.json();
+      
+        updateTable(data);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    function updateTable(data) {
+      const tableBody = document.getElementById('recordsTableBody');
+      tableBody.innerHTML = ''; // Clear the table
+
+      data.forEach(record => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${record.id}</td>
+          <td>${record.status_timestamp}</td>
+          <td>${record.UCID}</td>
+          <td>${record.name}</td>
+          <td class="align-right">${parseFloat(record.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="${record.percent_change_15m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_15m).toFixed(3)}</td>
+          <td class="${record.percent_change_30m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_30m).toFixed(3)}</td>
+          <td class="${record.percent_change_1h > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_1h).toFixed(3)}</td>
+          <td class="${record.percent_change_24h > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_24h).toFixed(3)}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>
