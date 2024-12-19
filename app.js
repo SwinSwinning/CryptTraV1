@@ -91,6 +91,6 @@ app.get('/get-ucids', async (req, res) => {
     }
   });
 
-app.listen(port, () => {
-    console.log('Server running at http://localhost:3000/');;
+app.listen(port, 0.0.0.0, () => {
+    console.log('Server running at http://0.0.0.0:3000');;
 });
