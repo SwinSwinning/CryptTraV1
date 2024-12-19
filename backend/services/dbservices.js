@@ -51,8 +51,9 @@ const getAllData = (ucid = null) => {
 
 // Insert data into the SQLite database
 const insertData = (dataList) => { 
-  createTable()
-  timestamp = dataList.status.timestamp
+
+ 
+
   return new Promise(async (resolve, reject) => {
     try {
       // Prepare an array to store all insert promises
