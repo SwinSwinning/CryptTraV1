@@ -27,16 +27,6 @@ cron.schedule('*/15 * * * *', async () => {
 });
 
 
-// app.get('/', async (req, res) => {
-//      try {
-//       const rows = await getAllData()
-//       res.render('index', { data: rows }); // Send the data to the frontend
-//     } catch (error) {
-//       console.log(error)
-//       res.status(500).send('Error fetching data from the database');
-//     }
-//   });
-
 app.get('/', async (req, res) => {
   const ucid = req.query.ucid; // Get UCID from the query parameter (if any)
   // console.log(ucid)  // THIS WORKS

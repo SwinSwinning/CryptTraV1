@@ -118,13 +118,13 @@ const calculatePriceChange = async (UCID, current_price, backticks = 0) => {
     `;
 
     db.get(query, [UCID, backticks], (err, row) => {
-      let percAlert = 2;
+      let percAlert = 3;
       let interval = "15m"
       if (backticks == 1) {
         interval = "30m"
-        percAlert = 3;
+        percAlert = 4;
       }
-      console.log("perc alert is " , percAlert)
+      // console.log("perc alert is " , percAlert)
       if (err) {
         reject('Error fetching data from the database');
       } else if (row) {
@@ -169,22 +169,24 @@ const getUcids = () => {
 
 };
 
-
 const clearDatabase = () => {
   return new Promise((resolve, reject) => {
     const query = `
-    DELETE FROM data
-    WHERE id NOT IN (
-      SELECT id FROM data
-      WHERE name in ("Bitcoin", "Ethereum")
-      ORDER BY status_timestamp DESC
-      LIMIT 10
-    )
-  `;
+      DELETE FROM data
+      WHERE rowid NOT IN (
+        SELECT rowid
+        FROM (
+          SELECT rowid, id,
+                 ROW_NUMBER() OVER (PARTITION BY id ORDER BY status_timestamp DESC) AS row_num
+          FROM data
+        )
+        WHERE row_num <= 3
+      )
+    `;
 
     db.run(query, (err) => {
       if (err) {
-        console.log(err)
+        console.log(err);
         reject('Error clearing the database');
       } else {
         resolve('Database cleared successfully');
@@ -192,6 +194,29 @@ const clearDatabase = () => {
     });
   });
 };
+
+// const clearDatabase = () => {
+//   return new Promise((resolve, reject) => {
+//     const query = `
+//     DELETE FROM data
+//     WHERE id NOT IN (
+//       SELECT id FROM data
+//       WHERE name in ("Bitcoin", "Ethereum")
+//       ORDER BY status_timestamp DESC
+//       LIMIT 10
+//     )
+//   `;
+
+//     db.run(query, (err) => {
+//       if (err) {
+//         console.log(err)
+//         reject('Error clearing the database');
+//       } else {
+//         resolve('Database cleared successfully');
+//       }
+//     });
+//   });
+// };
 
 const dropTable = () => {
   return new Promise((resolve, reject) => {

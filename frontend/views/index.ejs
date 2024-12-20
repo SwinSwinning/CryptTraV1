@@ -43,7 +43,7 @@
           <td><%= row.status_timestamp %></td>
           <td><%= row.UCID %></td>
           <td><%= row.name %></td>
-          <td class="align-right"><%= parseFloat(row.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+          <td class="align-right"><%= parseFloat(row.price).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 }) %></td>
           <td class="<%= row.percent_change_15m > 0 ? 'positive' : 'negative' %>"><%= parseFloat(row.percent_change_15m).toFixed(3) %></td>
           <td class="<%= row.percent_change_30m > 0 ? 'positive' : 'negative' %>"><%= parseFloat(row.percent_change_30m).toFixed(3) %></td>         
          
@@ -55,21 +55,23 @@
     </tbody>
   </table>
   <script>
-      fetch('/get-ucids')
-      .then(response => response.json())
-      .then(data => {
-        const dropdown = document.getElementById('ucidDropdown');
-        
-        // Populate the dropdown with options
-        data.forEach(row => {
-          const option = document.createElement('a');
-          option.href = '#';
-          option.textContent = row.name; // Adjust key based on your data
-          option.onclick = () => handleAction(row.UCID);
-          dropdown.appendChild(option);
-        });
-      })
-      .catch(error => console.error('Error fetching UCIDs:', error));
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/get-ucids')
+    .then(response => response.json())
+    .then(data => {
+      const dropdown = document.getElementById('ucidDropdown');
+      
+      // Populate the dropdown with options
+      data.forEach(row => {
+        const option = document.createElement('a');
+        option.href = '#';
+        option.textContent = row.name; // Adjust key based on your data
+        option.onclick = () => handleAction(row.UCID);
+        dropdown.appendChild(option);
+      });
+    })
+    .catch(error => console.error('Error fetching UCIDs:', error));
+});
 
       function handleAction(ucid) {
         console.log('UCID selected:', ucid);

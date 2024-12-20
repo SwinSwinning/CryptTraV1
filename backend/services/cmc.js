@@ -19,7 +19,7 @@ const config = {
 const { url, apiKey } = config[environment];
 
 const parameters = {
-    id : '1,1027' // Symbols for Bitcoin and Ethereum
+    id : '1,52,1839,5426,74,1958,1975,5994,20947,4642,24478,1027' // Symbols for Bitcoin and Ethereum
 };
 
 
