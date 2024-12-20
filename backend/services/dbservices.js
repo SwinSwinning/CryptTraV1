@@ -48,97 +48,108 @@ const getAllData = (ucid = null) => {
     });
   };
 
-
-// Insert data into the SQLite database
-const insertData = (dataList) => { 
-
- 
-
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Prepare an array to store all insert promises
-      const promises = [];
-      
-      // Loop over each item in the dataList
-      // Object.keys(dataList.data).forEach(key => { old method doesnt work with async
-      for (const key of Object.keys(dataList.data)) {
-
-        const timestamp = dataList.status.timestamp;
-        const UCID = dataList.data[key].id;
-        const name = dataList.data[key].name;
-        const price = dataList.data[key].quote.USD.price;                 
-        
-        const percent_change_15m = await calculatePriceChange(UCID, price, backticks=0) 
-        const percent_change_30m = await calculatePriceChange(UCID, price, backticks=1)         
-        const percent_change_1h = dataList.data[key].quote.USD.percent_change_1h;
-        const percent_change_24h = dataList.data[key].quote.USD.percent_change_24h;
-        
-        
-        const query = `
-          INSERT INTO data (status_timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        // Push the database insert promise to the array
-        const insertPromise = new Promise((innerResolve, innerReject) => {
-          db.run(query, [timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h], function (err) {
-            if (err) {
-              innerReject(`Error saving data to the database: ${err.message}`);
-            } else {
-              innerResolve(this.lastID); // Save the ID of the inserted record
-            }
-          });
-        });
-
-        promises.push(insertPromise);
-      };
-
-      // Wait for all insert operations to complete
-      const results = await Promise.all(promises);
-
-      resolve(results); // Resolve with all inserted record IDs
-    } catch (error) {
-      reject(`Error processing data: ${error}`);
-    }
-  });
-};
-
-const calculatePriceChange = async (UCID, current_price, backticks=0) => {    // Add Crypto or ID to the query 
+  const insertData = (dataList) => {
     return new Promise(async (resolve, reject) => {
-        const query = `
-        SELECT id, name, price, status_timestamp 
-        FROM data
-        WHERE UCID = ?
-        ORDER BY status_timestamp DESC
-        LIMIT 1 OFFSET ?;
-      `;
-  
-      db.get(query, [UCID, backticks], async (err, row) => {
-      
-        if (err) {
-          reject('Error fetching data from the database');
-        } else {
-          if (row) {  
-            // Calculate the percentage change
-            const priceChange = ((current_price - row.price) / row.price) * 100;            
-            if (Math.abs(priceChange) > 100) {
-              const message = `Alert: Price change exceeded 4%!\n` +
-                              `Timestamp: ${row.status_timestamp}\n` +
-                              `Coin: ${row.name}\n` +                            
-                              `current Price: ${current_price}\n` +
-                              `Change: ${priceChange.toFixed(2)}%`;
-              await sendTelegramMessage(message);
-            
-            }
-            resolve(priceChange);
-          } else {
-            console.log("No EARLIER data found ")
-            resolve(0); // If no data for 30 minutes ago, return 0 (or handle as needed)
-          }
+      try {
+        if (!dataList || !dataList.status || !dataList.data) {
+          return reject("Invalid dataList structure");
         }
-      });
+  
+        const timestamp = dataList.status.timestamp;
+        const promises = [];
+  
+        for (const key of Object.keys(dataList.data)) {
+          const item = dataList.data[key];
+          const UCID = item.id;
+          const name = item.name;
+          const price = item.quote.USD.price;
+          const percent_change_1h = item.quote.USD.percent_change_1h;
+          const percent_change_24h = item.quote.USD.percent_change_24h;
+  
+          // console.log("Processing:", UCID);
+  
+          const insertPromise = (async () => {
+            try {
+              const percent_change_15m = await calculatePriceChange(UCID, price, 0);
+              const percent_change_30m = await calculatePriceChange(UCID, price, 1);
+  
+              const query = `
+                INSERT INTO data (status_timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              `;
+  
+              return new Promise((innerResolve, innerReject) => {
+                db.run(query, [timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h], function (err) {
+                  if (err) {
+                    return innerReject(`DB Error: ${err.message}`);
+                  }
+                  innerResolve(this.lastID);
+                });
+              });
+            } catch (calcError) {
+              console.error(`Calculation Error for ${UCID}:`, calcError);
+              throw calcError;
+            }
+          })();
+  
+          promises.push(insertPromise);
+        }
+  
+        const results = await Promise.all(promises);
+        // console.log("All data inserted successfully:", results);
+        resolve(results);
+      } catch (error) {
+        console.error("Error in insertData:", error);
+        reject(error);
+      }
     });
   };
+  
+
+
+const calculatePriceChange = async (UCID, current_price, backticks = 0) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT id, name, price, status_timestamp 
+      FROM data
+      WHERE UCID = ?
+      ORDER BY status_timestamp DESC
+      LIMIT 1 OFFSET ?;
+    `;
+
+    db.get(query, [UCID, backticks], (err, row) => {
+      let percAlert = 2;
+      let interval = "15m"
+      if (backticks == 1) {
+        interval = "30m"
+        percAlert = 3;
+      }
+      console.log("perc alert is " , percAlert)
+      if (err) {
+        reject('Error fetching data from the database');
+      } else if (row) {
+        // Calculate the percentage change
+        const priceChange = ((current_price - row.price) / row.price) * 100;
+        
+        if (Math.abs(priceChange) > percAlert) {
+          const message = `Coin: ${row.name}\n` +
+                          `Current Price: ${current_price}\n` +
+                          `Change: ${priceChange.toFixed(2)}%` +
+                          `Interval: ${interval}%`;
+          sendTelegramMessage(message);
+          resolve(priceChange);
+        } else {
+          // Handle cases where the price change is <= 1%
+          // console.log(`Price change for ${UCID} is within acceptable limits.`);
+          resolve(priceChange); // Still resolve with the calculated value
+        }
+      } else {
+        console.log("No earlier data found for UCID:", UCID);
+        resolve(0); // No row found, resolve with 0
+      }
+    });
+  });
+};
 
 
 const getUcids = () => {

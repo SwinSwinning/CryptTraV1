@@ -1,8 +1,9 @@
+require('dotenv').config();
 const axios = require('axios');
 
 // Replace with your bot token and chat ID
-const TELEGRAM_BOT_TOKEN = '7376006152:AAEO1z8f8n-iXRcXqbITk--SZmLi7q_8yJ0';
-const TELEGRAM_CHAT_ID = '1756577837';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 const sendTelegramMessage = async (message) => {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
