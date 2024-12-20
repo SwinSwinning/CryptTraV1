@@ -16,7 +16,7 @@ app.set('views', path.join(__dirname, 'frontend/views'));
 app.use(express.static(path.join(__dirname, 'frontend/public')));
 
 // Schedule a cron job to run every 15 minutes
-cron.schedule('*/1 * * * *', async () => {
+cron.schedule('*/15 * * * *', async () => {
   try {
     console.log('Fetching and saving data...');
     data = await fetchAndSaveData(); 
@@ -27,16 +27,33 @@ cron.schedule('*/1 * * * *', async () => {
 });
 
 
-app.get('/', async (req, res) => {
-     try {
-      const rows = await getAllData()
-      res.render('index', { data: rows }); // Send the data to the frontend
-    } catch (error) {
-      console.log(error)
-      res.status(500).send('Error fetching data from the database');
-    }
-  });
+// app.get('/', async (req, res) => {
+//      try {
+//       const rows = await getAllData()
+//       res.render('index', { data: rows }); // Send the data to the frontend
+//     } catch (error) {
+//       console.log(error)
+//       res.status(500).send('Error fetching data from the database');
+//     }
+//   });
 
+app.get('/', async (req, res) => {
+  const ucid = req.query.ucid; // Get UCID from the query parameter (if any)
+  // console.log(ucid)  // THIS WORKS
+  try {
+    const rows = await getAllData(ucid)
+    if (ucid) {
+      res.json(rows)
+    } else {
+    // const rows = await getAllData(); // Fetch data based on UCID
+    // console.log(rows)
+    res.render('index', { data: rows }); // Send the data to the frontend
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).send('Error fetching data from the database');
+  }
+});
 
   app.post('/clearDatabase', async (req, res) => {
     try {

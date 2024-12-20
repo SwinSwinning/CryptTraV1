@@ -153,6 +153,7 @@ const calculatePriceChange = async (UCID, current_price, backticks = 0) => {
 
 
 const getUcids = () => {
+  console.log("retrieve ucids")
   return new Promise((resolve, reject) => {
     const query = `SELECT DISTINCT name, ucid
                     FROM data;`; // Adjust based on your actual table structure

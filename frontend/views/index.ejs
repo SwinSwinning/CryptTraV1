@@ -77,27 +77,9 @@
           fetch(`/?ucid=${ucid}`)
             .then(response => response.json()) // Assuming the server responds with JSON data
             .then(data => {
-              console.log(data)
+           
               // Reload the page to reflect the changes
-              const tableBody = document.getElementById('recordsTableBody');
-            tableBody.innerHTML = ''; // Clear current records
-
-        data.forEach(record => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-              <td>${record.id}</td>
-              <td>${record.status_timestamp}</td>
-              <td>${record.UCID}</td>
-              <td>${record.name}</td>
-              <td class="align-right">${parseFloat(record.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              <td class="${record.percent_change_15m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_15m).toFixed(3)}</td>
-              <td class="${record.percent_change_30m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_30m).toFixed(3)}</td>
-              <td class="${record.percent_change_1h > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_1h).toFixed(3)}</td>
-              <td class="${record.percent_change_24h > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_24h).toFixed(3)}</td>
-            `;
-          tableBody.appendChild(row);
-     });
-      console.log("data is -------------------------------------", data)
+              refreshDataOnPage(data)
     })
     .catch(error => console.error('Error fetching records:', error));
 }
