@@ -172,17 +172,13 @@ const getUcids = () => {
 const clearDatabase = () => {
   return new Promise((resolve, reject) => {
     const query = `
-      DELETE FROM data
-      WHERE rowid NOT IN (
-        SELECT rowid
-        FROM (
-          SELECT rowid, id,
-                 ROW_NUMBER() OVER (PARTITION BY id ORDER BY status_timestamp DESC) AS row_num
-          FROM data
-        )
-        WHERE row_num <= 3
-      )
-    `;
+    DELETE FROM data
+    WHERE id NOT IN (
+      SELECT id FROM data     
+      ORDER BY status_timestamp DESC
+      LIMIT 100
+    )
+  `;
 
     db.run(query, (err) => {
       if (err) {
@@ -201,9 +197,9 @@ const clearDatabase = () => {
 //     DELETE FROM data
 //     WHERE id NOT IN (
 //       SELECT id FROM data
-//       WHERE name in ("Bitcoin", "Ethereum")
+//      
 //       ORDER BY status_timestamp DESC
-//       LIMIT 10
+//       LIMIT 100
 //     )
 //   `;
 
