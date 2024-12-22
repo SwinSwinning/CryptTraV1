@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3');
 const { sendTelegramMessage } = require('./telegram');
 
 // Open SQLite database (it will create the file if it doesn't exist)
-const db = new sqlite3.Database('./mydb.sqlite3', (err) => {
+const db = new sqlite3.Database('./backend/database/mydb.sqlite3', (err) => {
   if (err) {
     console.error('Error opening database:', err);
   } else {
@@ -70,8 +70,8 @@ const getAllData = (ucid = null) => {
   
           const insertPromise = (async () => {
             try {
-              const percent_change_15m = await calculatePriceChange(UCID, price, 0);
-              const percent_change_30m = await calculatePriceChange(UCID, price, 1);
+              const percent_change_15m = await calculatePriceChange(UCID, price, 2);     
+              const percent_change_30m = await calculatePriceChange(UCID, price, 5);
   
               const query = `
                 INSERT INTO data (status_timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h)
@@ -107,7 +107,7 @@ const getAllData = (ucid = null) => {
   
 
 
-const calculatePriceChange = async (UCID, current_price, backticks = 0) => {
+const calculatePriceChange = async (UCID, current_price, backticks = 2) => {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT id, name, price, status_timestamp 
@@ -118,11 +118,11 @@ const calculatePriceChange = async (UCID, current_price, backticks = 0) => {
     `;
 
     db.get(query, [UCID, backticks], (err, row) => {
-      let percAlert = 3;
+      let percAlert = 2;
       let interval = "15m"
-      if (backticks == 1) {
+      if (backticks == 5) {
         interval = "30m"
-        percAlert = 4;
+        percAlert = 3;
       }
       // console.log("perc alert is " , percAlert)
       if (err) {
@@ -169,18 +169,20 @@ const getUcids = () => {
 
 };
 
-const clearDatabase = () => {
+const clearDatabase = (num_of_coins) => {
+  const records_to_keep = num_of_coins * 7;
+  
   return new Promise((resolve, reject) => {
     const query = `
     DELETE FROM data
     WHERE id NOT IN (
       SELECT id FROM data     
       ORDER BY status_timestamp DESC
-      LIMIT 100
+      LIMIT ?
     )
   `;
 
-    db.run(query, (err) => {
+    db.run(query, [records_to_keep], (err) => {
       if (err) {
         console.log(err);
         reject('Error clearing the database');
@@ -191,28 +193,6 @@ const clearDatabase = () => {
   });
 };
 
-// const clearDatabase = () => {
-//   return new Promise((resolve, reject) => {
-//     const query = `
-//     DELETE FROM data
-//     WHERE id NOT IN (
-//       SELECT id FROM data
-//      
-//       ORDER BY status_timestamp DESC
-//       LIMIT 100
-//     )
-//   `;
-
-//     db.run(query, (err) => {
-//       if (err) {
-//         console.log(err)
-//         reject('Error clearing the database');
-//       } else {
-//         resolve('Database cleared successfully');
-//       }
-//     });
-//   });
-// };
 
 const dropTable = () => {
   return new Promise((resolve, reject) => {
