@@ -1,2 +1,2 @@
 /.env
-mydb.sqlite3
+backend/database/mydb.sqlite3
