@@ -18,7 +18,8 @@ const createTable = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       status_timestamp TEXT,
       UCID INTEGER, 
-      name TEXT,
+      symbol TEXT,
+      name TEXT,      
       price REAL,
       percent_change_15m REAL,
       percent_change_30m REAL,
@@ -61,6 +62,7 @@ const getAllData = (ucid = null) => {
         for (const key of Object.keys(dataList.data)) {
           const item = dataList.data[key];
           const UCID = item.id;
+          const symbol = item.symbol;
           const name = item.name;
           const price = item.quote.USD.price;
           const percent_change_1h = item.quote.USD.percent_change_1h;
@@ -74,12 +76,12 @@ const getAllData = (ucid = null) => {
               const percent_change_30m = await calculatePriceChange(UCID, price, 5);
   
               const query = `
-                INSERT INTO data (status_timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO data (status_timestamp, UCID, symbol, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
               `;
   
               return new Promise((innerResolve, innerReject) => {
-                db.run(query, [timestamp, UCID, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h], function (err) {
+                db.run(query, [timestamp, UCID, symbol, name, price, percent_change_15m, percent_change_30m, percent_change_1h, percent_change_24h], function (err) {
                   if (err) {
                     return innerReject(`DB Error: ${err.message}`);
                   }

@@ -3,7 +3,7 @@ const path = require('path');
 const { fetchAndSaveData } = require("./backend/helpers")
 const { createTable, getAllData, clearDatabase, dropTable, getUcids } = require("./backend/services/dbservices")
 const cron = require('node-cron');
-const { create } = require('domain');
+// const { create } = require('domain');
 
 const app = express();
 createTable()
@@ -28,22 +28,43 @@ cron.schedule('*/5 * * * *', async () => {
 
 
 app.get('/', async (req, res) => {
-  const ucid = req.query.ucid; // Get UCID from the query parameter (if any)
-  // console.log(ucid)  // THIS WORKS
   try {
-    const rows = await getAllData(ucid)
-    if (ucid) {
-      res.json(rows)
-    } else {
-    // const rows = await getAllData(); // Fetch data based on UCID
-    // console.log(rows)
-    res.render('index', { data: rows }); // Send the data to the frontend
-    }
+      res.render('index'); // render the page  
   } catch (error) {
     console.log(error)
     res.status(500).send('Error fetching data from the database');
   }
 });
+
+app.get('/filtered', async (req, res) => {
+  const ucid = req.query.ucid; // Get UCID from the query parameter 
+  // console.log(ucid)  // THIS WORKS
+  try {
+    const rows = await getAllData(ucid)     
+    res.json(rows)    
+    
+
+  } catch (error) {
+    console.log(error)
+    res.status(500).send('Error fetching data from the database');
+  }
+});
+
+// app.get('/', async (req, res) => {
+//   const ucid = req.query.ucid; // Get UCID from the query parameter (if any)
+//   // console.log(ucid)  // THIS WORKS
+//   try {
+//     const rows = await getAllData(ucid)
+//     if (ucid) {
+//       res.json(rows)    } 
+//     else {
+//       res.render('index', { data: rows }); // Send the data to the frontend
+//     }
+//   } catch (error) {
+//     console.log(error)
+//     res.status(500).send('Error fetching data from the database');
+//   }
+// });
 
 // app.post('/clearDatabase', async (req, res) => {
 //     try {
@@ -67,16 +88,16 @@ app.post('/dropTable', async (req, res) => {
     }
 });
 
-// app.post('/get-from-db', async (req, res) => {
-//   try {
-//     records = await getAllData()
-//     // console.log(records.length)
-//     res.json(records)
-//   } catch (error) {
-//     console.error('Error:', error);
-//     res.status(500).send('Server error');
-//   }
-// });
+app.get('/get-from-db', async (req, res) => {
+  try {
+    records = await getAllData()
+    // console.log(records.length)
+    res.json(records)
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Server error');
+  }
+});
 
   app.post('/fetch-save-get', async (req, res) => {
     try {
@@ -99,15 +120,15 @@ app.post('/dropTable', async (req, res) => {
   });
   
 
-app.get('/get-ucids', async (req, res) => {
-    try {
-      const rows = await getUcids();
+// app.get('/get-ucids', async (req, res) => {
+//     try {
+//       const rows = await getUcids();
       
-      res.json(rows)
-    }  catch (error) {
-      res.status(500).send('Error fetching ucids from the database');
-    }
-  });
+//       res.json(rows)
+//     }  catch (error) {
+//       res.status(500).send('Error fetching ucids from the database');
+//     }
+//   });
 
 app.listen(port, '0.0.0.0' , () => {
     console.log(`Server running at http://localhost:${port}`);
