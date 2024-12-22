@@ -180,10 +180,10 @@ function handleAction(ucid) {    // Logic for clicking on a coin name from the d
     async function fetchAndSaveData() {
       try {
         const response = await fetch('/fetch-save-get', { method: 'POST' });
-        // console.log(response)
+        
         if (response.ok) {
           const records = await response.json();
-          console.log(records)
+          
           //REFRESH THE DATA ELEMENT WITH THE NEW DATA.
           refreshDataOnPage(records)
         } else {

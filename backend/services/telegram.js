@@ -5,7 +5,8 @@ const axios = require('axios');
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-const sendTelegramMessage = async (message) => {
+const sendTelegramMessage = async (message) => { 
+  
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
   try {
