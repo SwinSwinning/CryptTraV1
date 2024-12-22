@@ -143,7 +143,7 @@ const calculatePriceChange = async (UCID, current_price, backticks = 2) => {
         } else {
           // Handle cases where the price change is <= 1%
           // console.log(`Price change for ${UCID} is within acceptable limits.`);
-          resolve(priceChange); // Still resolve with the calculated value asdsd
+          resolve(priceChange); // Still resolve with the calculated value 
         }
       } else {
         console.log("No earlier data found for UCID:", UCID);
