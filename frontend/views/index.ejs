@@ -12,7 +12,7 @@
     <h1>Crypto Data Manager</h1>
     <button onclick="fetchAndSaveData()">Fetch and Save Data</button>
     <!-- <button onclick="clearDatabase()">Clear Database</button> -->
-    <button onclick="dropTable()">drop table from Database</button>
+    <button onclick="dropTable()">Drop table from Database</button>
     <div class="dropdown">
       <button class="dropbtn">Select UCID</button>
       <div class="dropdown-content" id="ucidDropdownContainer">
@@ -27,7 +27,7 @@
       <tr>
         <th>ID</th>
         <th>Status Timestamp</th>
-        <!-- <th>UCID</th> -->
+        <th>Symbol</th>
         <th>Name</th>
         <th>Price (USD)</th>
         <th>15 min Change (%)</th>
@@ -37,30 +37,18 @@
       </tr>
     </thead>
     <tbody id="recordsTableBody">
-      <% data.forEach(function(row) { %>
-        <tr>
-          <td><%= row.id %></td>
-          <td><%= row.status_timestamp.split('.')[0] %></td>
-          <!-- <td><%= row.UCID %></td> -->
-          <td><%= row.name %></td>
-          <td class="align-right"><%= parseFloat(row.price).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 }) %></td>
-          <td class="<%= row.percent_change_15m > 0 ? 'positive' : 'negative' %>"><%= parseFloat(row.percent_change_15m).toFixed(2) %></td>
-          <td class="<%= row.percent_change_30m > 0 ? 'positive' : 'negative' %>"><%= parseFloat(row.percent_change_30m).toFixed(2) %></td>         
-         
-          <td class="<%= row.percent_change_1h > 0 ? 'positive' : 'negative' %>"><%= parseFloat(row.percent_change_1h).toFixed(2) %></td>
-          <td class="<%= row.percent_change_24h > 0 ? 'positive' : 'negative' %>"><%= parseFloat(row.percent_change_24h).toFixed(2) %></td>
-        </tr>
-      <% }); %>
+    <!-- database records are dynamically created here -->
       
     </tbody>
   </table>
   <script>
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Fetch the UCIDs on page load
-  fetch('/get-ucids')
+document.addEventListener('DOMContentLoaded', () => { 
+    //get all data
+  fetch('/get-from-db')
     .then(response => response.json())
-    .then(data => {
+    .then(data => { 
+      // console.log(data)
       const dropdownContainer = document.getElementById('ucidDropdownContainer');
       const searchInput = document.createElement('input'); // Create the search input field
       const dropdown = document.createElement('div'); // Create the dropdown container for options
@@ -109,49 +97,75 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populate dropdown with filtered data
         populateDropdown(filteredData);
       });
+      refreshDataOnPage(data)
     })
-    .catch(error => console.error('Error fetching UCIDs:', error));
+    .catch(error => console.error('Error fetching records:', error));
 });
 
-
-// document.addEventListener('DOMContentLoaded', () => {  // This searches for all available UCID's on page load
+// document.addEventListener('DOMContentLoaded', () => {
+//   //Fetch all records from database on page load
+     
+//   //Fetch the UCIDs on page load
 //   fetch('/get-ucids')
 //     .then(response => response.json())
-//     .then(data => {    
-//       populateDropdown(data)
+//     .then(data => {
+//       const dropdownContainer = document.getElementById('ucidDropdownContainer');
+//       const searchInput = document.createElement('input'); // Create the search input field
+//       const dropdown = document.createElement('div'); // Create the dropdown container for options
 
+//       searchInput.type = 'text';
+//       searchInput.placeholder = 'Search UCIDs...';
+//       dropdown.id = 'ucidDropdown';
+//       dropdownContainer.appendChild(searchInput);
+//       dropdownContainer.appendChild(dropdown);
+
+//       // Function to populate the dropdown with filtered data
+//       const populateDropdown = (filteredData) => {
+//         dropdown.innerHTML = ''; // Clear current dropdown options
+
+//         // If no matches, show 'No results found'
+//         if (filteredData.length === 0) {
+//           const noResult = document.createElement('div');
+//           noResult.textContent = 'No results found';
+//           dropdown.appendChild(noResult);
+//           return; // Exit function if no results
+//         }
+
+//         // Populate dropdown with filtered data
+//         filteredData.forEach(row => {
+//           const option = document.createElement('a');
+//           option.href = '#';
+//           option.textContent = row.name; // Adjust key based on your data
+//           option.onclick = () => handleAction(row.UCID);
+//           dropdown.appendChild(option);
+//         });
+//       };
+
+//       // Initially populate the dropdown with all data
+//       populateDropdown(data);
+
+//       // Add an event listener to filter and update dropdown based on input
 //       searchInput.addEventListener('input', (event) => {
 //         const query = event.target.value.toLowerCase();
-//         console.log("query is : ", query)
+//         console.log("query is : ", query);
+
+//         // Filter data based on the user's input
 //         const filteredData = data.filter(row => row.name.toLowerCase().includes(query));
-//         console.log("filtered is : ", filteredData)
+
+//         console.log("filtered is : ", filteredData);
+
+//         // Populate dropdown with filtered data
 //         populateDropdown(filteredData);
 //       });
-
 //     })
 //     .catch(error => console.error('Error fetching UCIDs:', error));
 // });
 
 
-
-
-      // Function to populate the dropdown with filtered options
-  // function populateDropdown (data) {
-  //     const dropdown = document.getElementById('ucidDropdown');
-  //     data.forEach(row => {
-  //       const option = document.createElement('a');
-  //       option.href = '#';
-  //       option.textContent = row.name; // Adjust key based on your data
-  //       option.onclick = () => handleAction(row.UCID);
-  //       dropdown.appendChild(option);
-  //     });
-  //     };
-
-
 function handleAction(ucid) {    // Logic for clicking on a coin name from the drop down to filter the records and display them. 
       console.log('UCID selected:', ucid);
       // Make a GET request to the server with the selected UCID as a query parameter
-        fetch(`/?ucid=${ucid}`)
+        fetch(`/filtered?ucid=${ucid}`)
           .then(response => response.json()) // Assuming the server responds with JSON data
           .then(data => {
           
@@ -223,7 +237,7 @@ function handleAction(ucid) {    // Logic for clicking on a coin name from the d
           row.innerHTML = `
               <td>${record.id}</td>
               <td>${record.status_timestamp.split('.')[0]}</td>
-              
+              <td>${record.symbol}</td>
               <td>${record.name}</td>
               <td class="align-right">${parseFloat(record.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td class="${record.percent_change_15m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_15m).toFixed(3)}</td>
