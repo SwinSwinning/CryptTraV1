@@ -138,7 +138,7 @@ const calculatePriceChange = async (UCID, current_price, backticks = 2) => {
                           `Current Price: ${current_price}\n` +
                           `Change: ${priceChange.toFixed(2)}%` +
                           `Interval: ${interval}%`;
-          // sendTelegramMessage(message);
+          sendTelegramMessage(message);
           resolve(priceChange);
         } else {
           // Handle cases where the price change is <= 1%
