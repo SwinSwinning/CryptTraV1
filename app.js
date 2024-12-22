@@ -103,8 +103,8 @@ app.get('/get-from-db', async (req, res) => {
     try {
      // Fetch data from a cmc api and save into db
       num_results = await fetchAndSaveData() // return number of coins to track
-      
-
+      // num_results = 99
+      // console.log(num_results)
       // Clear old records from the database
       await clearDatabase(num_results);
 
