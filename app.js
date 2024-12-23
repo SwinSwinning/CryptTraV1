@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
-const { fetchAndSaveData } = require("./backend/helpers")
-const { createTable, getAllData, clearDatabase, dropTable, getUcids } = require("./backend/services/dbservices")
+const { createTable, getAllData, clearDatabase, dropTable, insertData } = require("./backend/services/dbservices")
+const { fetchAPIData } = require('./backend/services/cmc')
 const cron = require('node-cron');
 // const { create } = require('domain');
 
@@ -18,8 +18,12 @@ app.use(express.static(path.join(__dirname, 'frontend/public')));
 cron.schedule('*/5 * * * *', async () => {
   try {
     console.log('Fetching and saving data...');
-    numresults = await fetchAndSaveData(); 
-    await clearDatabase(numresults);
+    data = await fetchAPIData(); 
+          
+    results = await insertData(data);     
+    await clearDatabase(results.length);
+
+    
 
   } catch (error) {
     console.error('Error fetching or saving data:', error);
@@ -101,12 +105,9 @@ app.get('/get-from-db', async (req, res) => {
 
   app.post('/fetch-save-get', async (req, res) => {
     try {
-     // Fetch data from a cmc api and save into db
-      num_results = await fetchAndSaveData() // return number of coins to track
-      // num_results = 99
-      // console.log(num_results)
-      // Clear old records from the database
-      await clearDatabase(num_results);
+      data = await fetchAPIData();        
+      results = await insertData(data);         
+      await clearDatabase(results.length);
 
       // fetch all records from the database 
       records = await getAllData();    
