@@ -81,8 +81,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       };
 
-      // Initially populate the dropdown with all data
-      populateDropdown(data);
+      const uniqueRecords = Array.from(
+        data.reduce((map, record) => {
+          if (!map.has(record.UCID)) {
+            map.set(record.UCID, { UCID: record.UCID, name: record.name });
+          }
+          return map;
+        }, new Map()).values()
+      );
+   
+      // Initially populate the dropdown with all UCIDs
+      populateDropdown(uniqueRecords);
 
       // Add an event listener to filter and update dropdown based on input
       searchInput.addEventListener('input', (event) => {

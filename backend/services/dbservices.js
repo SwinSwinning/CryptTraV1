@@ -213,7 +213,8 @@ const getAllData = (ucid = null) => {
           const priceChange = ((current_price - prev_row.price) / prev_row.price) * 100;
   
           // const previous_percent_change = interval === "30m" ? prev_row.percent_change_30m : prev_row.percent_change_15m 
-          if(Math.abs(priceChange) > percAlert && Math.abs(previous_percent_change) > percAlert) {
+          if (interval == "15m") {
+            if(Math.abs(priceChange) > percAlert && Math.abs(previous_percent_change) > percAlert) {
               const message = `Coin: ${prev_row.name} - ${prev_row.symbol}\n` +
               `Current Price: ${current_price}\n` + 
               `Change: ${priceChange.toFixed(2)}%\n` + 
@@ -221,7 +222,9 @@ const getAllData = (ucid = null) => {
               `Interval: ${interval}`;
               console.log(message)
               sendTelegramMessage(message);
+            }
           }
+
           resolve(priceChange); // Default to 0 if no data found
 
         } else {
