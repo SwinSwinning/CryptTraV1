@@ -248,7 +248,7 @@ function handleAction(ucid) {    // Logic for clicking on a coin name from the d
               <td>${record.status_timestamp.split('.')[0]}</td>
               <td>${record.symbol}</td>
               <td>${record.name}</td>
-              <td class="align-right">${parseFloat(record.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td class="align-right">${parseFloat(record.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 })}</td>
               <td class="${record.percent_change_15m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_15m).toFixed(3)}</td>
               <td class="${record.percent_change_30m > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_30m).toFixed(3)}</td>
               <td class="${record.percent_change_1h > 0 ? 'positive' : 'negative'}">${parseFloat(record.percent_change_1h).toFixed(3)}</td>
