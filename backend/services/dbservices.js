@@ -1,7 +1,7 @@
 
 const sqlite3 = require('sqlite3');
 const { sendTelegramMessage } = require('./telegram');
-const { CalculatePercChange } = require('../helpers');
+const { CalculatePercChange, sendNotification } = require('../helpers');
 
 // Open SQLite database (it will create the file if it doesn't exist)
 const db = new sqlite3.Database('./backend/database/mydb.sqlite3', (err) => {
@@ -50,6 +50,22 @@ const getAllData = (ucid = null) => {
     });
   };
 
+  const getLastSixCandles = (ucid ) => {
+    return new Promise((resolve, reject) => {
+      createTable()    
+        query = 'SELECT * FROM data WHERE UCID = ? ORDER BY id DESC LIMIT 6'; // Filter by UCID if provided
+
+
+      db.all(query, ucid ? [ucid] : [], (err, rows) => {
+        if (err) {
+            console.log(err)
+          reject('getLast6candles, Error fetching data from database!', err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+  };
 
   const insertData = async (dataList) => {
     return new Promise(async (resolve, reject) => {
@@ -62,15 +78,24 @@ const getAllData = (ucid = null) => {
           const UCID = item.id;
           const symbol = item.symbol;
           const name = item.name;
-          const price = item.quote.USD.price;
-          const percent_change_1h = item.quote.USD.percent_change_1h;
-          const percent_change_24h = item.quote.USD.percent_change_24h;  
-       
-  
-          // Fetch percent_change_15m and percent_change_30m
-          const percent_change_15m = await getPercentChange(price, UCID, 2);
-          const percent_change_30m = await getPercentChange(price, UCID, 5);
           
+          const price = item.quote['825'].price;
+          const percent_change_1h = item.quote['825'].percent_change_1h;
+          const percent_change_24h = item.quote['825'].percent_change_24h;  
+      
+          // Fetch percent_change_15m and percent_change_30m 
+          const last_perc_changes = await getPercentChange(price, UCID);
+
+          const percent_change_15m = last_perc_changes.last_15m_change
+          const percent_change_30m = last_perc_changes.last_30m_change
+          
+          // const bigChange = Math.abs(last_perc_changes.last_candle_change) > 1.4 ? true : false
+
+          if (Math.abs((last_perc_changes.last_candle_change) + Math.abs(last_perc_changes.second_last_candle_change)) > 3.5 ){
+            
+            sendNotification(price, symbol, name, last_perc_changes.last_candle_change, last_perc_changes.second_last_candle_change, percent_change_15m, percent_change_30m)
+          }
+
           // Create and push the insertion promise
           promises.push(
             new Promise((innerResolve, innerReject) => {
@@ -104,86 +129,98 @@ const getAllData = (ucid = null) => {
   };
   
 
-  
-  const getLastRow = async (UCID, interval) => {
-    return new Promise((resolve, reject) => {
-      const query = `
-        SELECT price, 
-        CASE 
-          WHEN ? = '15m' THEN percent_change_15m
-          WHEN ? = '30m' THEN percent_change_30m
-          ELSE NULL -- If interval is neither '15m' nor '30m', return NULL or a default value
-        END AS selected_percent_change
-        FROM data  
-        WHERE UCID = ?      
-        ORDER BY status_timestamp DESC
-        LIMIT 1;
-      `;
-  
-      db.get(query, [interval,interval, UCID], (err, row) => {
-        if (err) {
-          return reject(`Error fetching previous interval change: ${err.message}`);
-        }
-          
-          resolve(row); 
+  const getPercentChange = async (current_price, UCID) => {
+    const last_rows = await getLastSixCandles(UCID)    
+   
+   
+    const last_price = last_rows[0] ? last_rows[0].price : 0   // check and save last candle price
+    const scndLast_price = last_rows[1] ? last_rows[1].price : 0   // check and save 2nd to last candle price
+    const last_15m_price = last_rows[2] ? last_rows[2].price : 0
+    const last_30m_price = last_rows[5] ? last_rows[5].price : 0
 
-      });
-    });
+    const last_candle_change = last_rows[0] ? CalculatePercChange(current_price, last_price) : 0
+    const second_last_candle_change =  last_rows[1] ? CalculatePercChange(last_price, scndLast_price) : 0
+    const last_15m_change = last_rows[2] ? CalculatePercChange(current_price, last_15m_price) : 0
+    const last_30m_change = last_rows[5] ? CalculatePercChange(current_price, last_30m_price) : 0
 
-  }
-  const getPercentChange = async (current_price, UCID, backticks) => {
- 
-    const percAlert = backticks === 5 ? 3: 2           
-    const interval = backticks === 5 ? "30m" : "15m"   
-    const last_row = await getLastRow(UCID, interval)
+    const result = {
+      "last_candle_change" : last_candle_change,
+      "last_15m_change": last_15m_change,
+      "second_last_candle_change": second_last_candle_change,
+      "last_30m_change": last_30m_change
+    }   
+
+    return result
     
-    const last_price = last_row ? last_row.price : 0 
-    const last_perc = last_row ? last_row.selected_percent_change : 0
-    const last_candle_change = last_row ? CalculatePercChange(current_price, last_price) : 0
-    const bigChange = Math.abs(last_candle_change) > 1.4 ? true : false
+
+  };
+
+  // const getLastRow = async (UCID, interval) => {
+  //   return new Promise((resolve, reject) => {
+  //     const query = `
+  //       SELECT price, 
+  //       CASE 
+  //         WHEN ? = '15m' THEN percent_change_15m
+  //         WHEN ? = '30m' THEN percent_change_30m
+  //         ELSE NULL -- If interval is neither '15m' nor '30m', return NULL or a default value
+  //       END AS selected_percent_change
+  //       FROM data  
+  //       WHERE UCID = ?      
+  //       ORDER BY status_timestamp DESC
+  //       LIMIT 1;
+  //     `;
+  
+  //     db.get(query, [interval,interval, UCID], (err, row) => {
+  //       if (err) {
+  //         return reject(`Error fetching previous interval change: ${err.message}`);
+  //       }
+         
+  //         resolve(row); 
+
+  //     });
+  //   });
+
+  // }
+
+
+  // const getPercentChange = async (current_price, UCID, backticks) => {
+ 
+  //   const percAlert = backticks === 5 ? 3: 2           
+  //   const interval = backticks === 5 ? "30m" : "15m"   
+  //   const last_row = await getLastRow(UCID, interval)
+    
+  //   console.log("last rows : ", last_row)
+  //   const last_price = last_row ? last_rows.price : 0 
+  //   const last_perc = last_row ? last_row.selected_percent_change : 0
+  //   const last_candle_change = last_row ? CalculatePercChange(current_price, last_price) : 0
+  //   const bigChange = Math.abs(last_candle_change) > 1.4 ? true : false
    
 
     
-    return new Promise((resolve, reject) => {
-      const query = `
-        SELECT name, symbol, price, percent_change_15m, percent_change_30m 
-        FROM data  
-        WHERE UCID = ?      
-        ORDER BY status_timestamp DESC
-        LIMIT 1 OFFSET ?;
-      `;
+  //   return new Promise((resolve, reject) => {
+  //     const query = `
+  //       SELECT name, symbol, price, percent_change_15m, percent_change_30m 
+  //       FROM data  
+  //       WHERE UCID = ?      
+  //       ORDER BY status_timestamp DESC
+  //       LIMIT 1 OFFSET ?;
+  //     `;
   
-      db.get(query, [UCID, backticks], (err, prev_row) => {
-        if (err) {
-          return reject(`Error fetching percent change: ${err.message}`);
-        }
-        if(prev_row){
-          const prevPercChange = CalculatePercChange(current_price, prev_row.price);
-  
-          // const previous_percent_change = interval === "30m" ? prev_row.percent_change_30m : prev_row.percent_change_15m 
-          if (interval == "15m") {
-            if((Math.abs(prevPercChange) > percAlert && Math.abs(last_perc) > percAlert) || bigChange) {
-              const message = `Coin: ${prev_row.name} - ${prev_row.symbol}\n` +
-              `Current Price: ${current_price}\n` + 
-              `Last Candle price: ${last_price}  - ${bigChange}\n` +
-              `pricechange with last candle: ${last_candle_change}\n` +
-              `Change: ${prevPercChange.toFixed(2)}%\n` + 
-              `previous: ${last_perc.toFixed(2)}%`
-              
-              console.log(message)
-              console.log("----------------------")
-              sendTelegramMessage(message);
-            }
-          }
+  //     db.get(query, [UCID, backticks], (err, prev_row) => {
+  //       if (err) {
+  //         return reject(`Error fetching percent change: ${err.message}`);
+  //       }
+  //       if(prev_row){
+  //         console.log(prev_row)
+  //         const prevPercChange = sendNotification(current_price, previous_price)
+  //         resolve(0); 
 
-          resolve(prevPercChange); // Default to 0 if no data found
-
-        } else {
-          resolve(0)
-        }
-      });
-    });
-  };
+  //       } else {
+  //         resolve(0)
+  //       }
+  //     });
+  //   });
+  // };
 
 
 

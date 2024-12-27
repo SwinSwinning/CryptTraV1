@@ -14,7 +14,7 @@ app.set('views', path.join(__dirname, 'frontend/views'));
 
 app.use(express.static(path.join(__dirname, 'frontend/public')));
 
-// Schedule a cron job to run every 5 minutes
+//Schedule a cron job to run every 5 minutes
 cron.schedule('*/5 * * * *', async () => {
   try {
     console.log('Fetching and saving data...');

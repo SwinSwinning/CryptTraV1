@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return map;
         }, new Map()).values()
       );
-   
+      console.log(uniqueRecords)  
       // Initially populate the dropdown with all UCIDs
       populateDropdown(uniqueRecords);
 
@@ -99,7 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("query is : ", query);
 
         // Filter data based on the user's input
-        const filteredData = data.filter(row => row.name.toLowerCase().includes(query));
+        // const filteredData = data.filter(row => row.name.toLowerCase().includes(query));
+        const filteredData = data
+        .filter(row => row.name.toLowerCase().includes(query))
+        .filter((row, index, self) => 
+          index === self.findIndex(r => r.name.toLowerCase() === row.name.toLowerCase())
+        );
+
 
         console.log("filtered is : ", filteredData);
 
