@@ -71,14 +71,26 @@ document.addEventListener('DOMContentLoaded', () => {
           return; // Exit function if no results
         }
 
-        // Populate dropdown with filtered data
+        // Populate dropdown with filtered data without duplicates
         filteredData.forEach(row => {
-          const option = document.createElement('a');
-          option.href = '#';
-          option.textContent = row.name; // Adjust key based on your data
-          option.onclick = () => handleAction(row.UCID);
-          dropdown.appendChild(option);
+          const existingOptions = Array.from(dropdown.children).map(option => option.textContent);
+          if (!existingOptions.includes(row.name)) { // Adjust key based on your data
+            const option = document.createElement('a');
+            option.href = '#';
+            option.textContent = row.name; // Adjust key based on your data
+            option.onclick = () => handleAction(row.UCID);
+            dropdown.appendChild(option);
+          }
         });
+
+        // // Populate dropdown with filtered data
+        // filteredData.forEach(row => {
+        //   const option = document.createElement('a');
+        //   option.href = '#';
+        //   option.textContent = row.name; // Adjust key based on your data
+        //   option.onclick = () => handleAction(row.UCID);
+        //   dropdown.appendChild(option);
+        // });
       };
 
       const uniqueRecords = Array.from(
@@ -90,10 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }, new Map()).values()
       );
       console.log(uniqueRecords)  
-      // Initially populate the dropdown with all UCIDs
+      
       populateDropdown(uniqueRecords);
 
-      // Add an event listener to filter and update dropdown based on input
+      //Add an event listener to filter and update dropdown based on input
       searchInput.addEventListener('input', (event) => {
         const query = event.target.value.toLowerCase();
         console.log("query is : ", query);
@@ -102,9 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // const filteredData = data.filter(row => row.name.toLowerCase().includes(query));
         const filteredData = data
         .filter(row => row.name.toLowerCase().includes(query))
-        .filter((row, index, self) => 
-          index === self.findIndex(r => r.name.toLowerCase() === row.name.toLowerCase())
-        );
+
 
 
         console.log("filtered is : ", filteredData);

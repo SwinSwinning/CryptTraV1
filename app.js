@@ -45,6 +45,7 @@ app.get('/filtered', async (req, res) => {
   // console.log(ucid)  // THIS WORKS
   try {
     const rows = await getAllData(ucid)     
+    
     res.json(rows)    
     
 

@@ -89,10 +89,11 @@ const getAllData = (ucid = null) => {
           const percent_change_15m = last_perc_changes.last_15m_change
           const percent_change_30m = last_perc_changes.last_30m_change
           
-          // const bigChange = Math.abs(last_perc_changes.last_candle_change) > 1.4 ? true : false
-
-          if (Math.abs((last_perc_changes.last_candle_change) + Math.abs(last_perc_changes.second_last_candle_change)) > 3.5 ){
-            
+          const bigChange = (Math.abs(last_perc_changes.last_candle_change) + Math.abs(last_perc_changes.second_last_candle_change)) > 2.5  ? true : false
+          if(UCID===1){
+            console.log(name, last_perc_changes.last_candle_change, "+",  last_perc_changes.second_last_candle_change, "=", last_perc_changes.last_candle_change+ last_perc_changes.second_last_candle_change)
+          }
+          if (bigChange){            
             sendNotification(price, symbol, name, last_perc_changes.last_candle_change, last_perc_changes.second_last_candle_change, percent_change_15m, percent_change_30m)
           }
 
