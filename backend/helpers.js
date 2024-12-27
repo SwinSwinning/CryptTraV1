@@ -14,7 +14,7 @@ function sendNotification(current_price, symbol, name, last_candle_change, secon
 
     // console.log(message)
 
-    //sendTelegramMessage(message);
+    sendTelegramMessage(message);
               
 
 }
