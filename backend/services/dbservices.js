@@ -260,7 +260,7 @@ const clearDatabase = (num_of_coins) => {
     )
   `;
 
-    db.run(query, [records_to_keep], (err) => {
+    db.run(query, [], (err) => {
       if (err) {
         console.log(err);
         reject('Error clearing the database');
