@@ -256,7 +256,7 @@ const clearDatabase = (num_of_coins) => {
       )
       SELECT id
       FROM RankedOccurrences
-      WHERE rank <= 7;
+      WHERE rank <= 7
     )
   `;
 
