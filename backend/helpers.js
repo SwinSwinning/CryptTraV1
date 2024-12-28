@@ -1,3 +1,5 @@
+const { sendTelegramMessage } = require('./services/telegram');
+
 function CalculatePercChange(current_price, previous_price) {
     return ((current_price - previous_price) / previous_price) * 100;
 }

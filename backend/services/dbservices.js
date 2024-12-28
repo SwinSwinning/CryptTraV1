@@ -1,6 +1,5 @@
 
 const sqlite3 = require('sqlite3');
-const { sendTelegramMessage } = require('./telegram');
 const { CalculatePercChange, sendNotification } = require('../helpers');
 
 // Open SQLite database (it will create the file if it doesn't exist)
