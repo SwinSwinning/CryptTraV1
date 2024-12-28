@@ -22,7 +22,7 @@ cron.schedule('*/5 * * * *', async () => {
           
     results = await insertData(data);     
     await clearDatabase(results.length);
-
+    
     
 
   } catch (error) {
