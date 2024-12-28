@@ -88,7 +88,7 @@ const getAllData = (ucid = null) => {
           const percent_change_15m = last_perc_changes.last_15m_change
           const percent_change_30m = last_perc_changes.last_30m_change
           
-          const bigChange = Math.abs(last_perc_changes.last_candle_change) + Math.abs(last_perc_changes.second_last_candle_change) > 2  ? true : false
+          const bigChange = Math.abs(last_perc_changes.last_candle_change) + Math.abs(last_perc_changes.second_last_candle_change) > 2.5  ? true : false
           if(UCID===1){
             console.log(name, last_perc_changes.last_candle_change, "+",  last_perc_changes.second_last_candle_change, "=", last_perc_changes.last_candle_change+ last_perc_changes.second_last_candle_change)
           }
@@ -242,15 +242,21 @@ const getAllData = (ucid = null) => {
 // };
 
 const clearDatabase = (num_of_coins) => {
-  const records_to_keep = num_of_coins * 7;
+  // const records_to_keep = num_of_coins * 7;
   
   return new Promise((resolve, reject) => {
     const query = `
     DELETE FROM data
     WHERE id NOT IN (
-      SELECT id FROM data     
-      ORDER BY id 
-      LIMIT ?
+      WITH RankedOccurrences AS (
+          SELECT
+              id,
+              ROW_NUMBER() OVER (PARTITION BY UCID ORDER BY status_timestamp DESC) AS rank
+          FROM data
+      )
+      SELECT id
+      FROM RankedOccurrences
+      WHERE rank <= 7;
     )
   `;
 
