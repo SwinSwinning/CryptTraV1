@@ -52,12 +52,12 @@ Technologies Used
     -   nodemon@3.1.9
 
     -   sqlite3@5.1.7
-    -   
+      
 -   **API Services**:
-  
-  -   Cryptocurrency data provided by the [CoinMarketCap API](https://coinmarketcap.com/api/).
-  
-  -   Telegram bot integration powered by the Telegram Bot API.
+      
+      -   Cryptocurrency data provided by the [CoinMarketCap API](https://coinmarketcap.com/api/).  
+      
+      -   Telegram bot integration powered by the Telegram Bot API.
 * * * * *
 
 Installation and Setup
